@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise BizHub - Management Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-200 min-h-screen flex flex-col md:flex-row">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="w-full md:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-shrink-0 flex flex-col justify-between transition-all duration-300">
+        <div>
+            <!-- Logo Header -->
+            <div class="h-16 flex items-center justify-between px-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-blue-600 text-white rounded-lg font-bold text-xl">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <span class="font-bold text-lg text-gray-900 dark:text-white tracking-wide">BizPulse Pro</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="p-4 space-y-1">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fa-solid fa-house w-5 text-lg"></i>
+                    <span>Overview Analytics</span>
+                </button>
+                <button onclick="switchTab('tasks')" id="nav-tasks" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fa-solid fa-list-check w-5 text-lg"></i>
+                    <span>Projects & Tasks</span>
+                </button>
+                <button onclick="switchTab('team')" id="nav-team" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fa-solid fa-users w-5 text-lg"></i>
+                    <span>Team Directory</span>
+                </button>
+                <button onclick="switchTab('finance')" id="nav-finance" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fa-solid fa-wallet w-5 text-lg"></i>
+                    <span>Financial Tracker</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Sidebar Footer Controls -->
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                <span class="flex items-center gap-2"><i id="themeIcon" class="fa-solid fa-moon"></i> Theme Mode</span>
+                <span id="themeLabel" class="text-xs font-semibold uppercase tracking-wider">Dark</span>
+            </button>
+            <div class="flex items-center gap-3 px-2 pt-2">
+                <div class="w-8 h-8 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center text-sm">AD</div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-semibold truncate">Alex Director</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">admin@bizpulse.com</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        <!-- Top Bar Header -->
+        <header class="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 flex-shrink-0">
+            <h1 id="pageTitle" class="text-xl font-bold text-gray-800 dark:text-white">Overview Dashboard</h1>
+            <div class="flex items-center gap-4">
+                <span id="currentDate" class="text-sm font-medium text-gray-500 dark:text-gray-400"></span>
+            </div>
+        </header>
+
+        <!-- View Content Area -->
+        <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+            
+            <!-- SECTION 1: DASHBOARD OVERVIEW -->
+            <section id="sec-dashboard" class="space-y-6">
+                <!-- KPI Cards Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <!-- Total Revenue Card -->
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Revenue</p>
+                                <h2 id="kpiRevenue" class="text-2xl font-bold mt-1 text-gray-900 dark:text-white">$0.00</h2>
+                            </div>
+                            <div class="p-3 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-lg">
+                                <i class="fa-solid fa-dollar-sign text-lg"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-3 flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-up"></i> 12.5% vs last month
+                        </p>
+                    </div>
+
+                    <!-- Active Projects Card -->
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Active Tasks</p>
+                                <h2 id="kpiTasks" class="text-2xl font-bold mt-1 text-gray-900 dark:text-white">0</h2>
+                            </div>
+                            <div class="p-3 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg">
+                                <i class="fa-solid fa-list-check text-lg"></i>
+                            </div>
+                        </div>
+                        <p id="kpiPendingTasks" class="text-xs text-gray-500 dark:text-gray-400 mt-3">0 Pending completion</p>
+                    </div>
+
+                    <!-- Team Members Card -->
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Team Members</p>
+                                <h2 id="kpiTeam" class="text-2xl font-bold mt-1 text-gray-900 dark:text-white">0</h2>
+                            </div>
+                            <div class="p-3 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded-lg">
+                                <i class="fa-solid fa-user-group text-lg"></i>
+                            </div>
+                        </div>
+                        <p id="kpiDeptCount" class="text-xs text-gray-500 dark:text-gray-400 mt-3">Across 0 Departments</p>
+                    </div>
+
+                    <!-- Total Expenses Card -->
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Expenses</p>
+                                <h2 id="kpiExpenses" class="text-2xl font-bold mt-1 text-gray-900 dark:text-white">$0.00</h2>
+                            </div>
+                            <div class="p-3 bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 rounded-lg">
+                                <i class="fa-solid fa-receipt text-lg"></i>
+                            </div>
+                        </div>
+                        <p id="kpiProfitMargin" class="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-3">Net Balance: $0.00</p>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Revenue vs Expense Line Chart -->
+                    <div class="lg:col-span-2 bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-gray-800 dark:text-white">Financial Analytics Overview</h3>
+                        </div>
+                        <div class="relative h-72">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Task Progress Doughnut Chart -->
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <h3 class="font-bold text-gray-800 dark:text-white mb-4">Task Status Distribution</h3>
+                        <div class="relative h-72 flex items-center justify-center">
+                            <canvas id="taskStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: PROJECT & TASK TRACKER -->
+            <section id="sec-tasks" class="space-y-6 hidden">
+                <!-- Task Header Actions -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                        <div class="relative flex-1 sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="taskSearchInput" oninput="renderTasks()" placeholder="Search tasks..." class="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <select id="taskStatusFilter" onchange="renderTasks()" class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="All">All Statuses</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                    <button onclick="openTaskModal()" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-plus"></i> Add New Task
+                    </button>
+                </div>
+
+                <!-- Task List Table -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th class="py-3 px-4">Task Title</th>
+                                    <th class="py-3 px-4">Assignee</th>
+                                    <th class="py-3 px-4">Deadline</th>
+                                    <th class="py-3 px-4">Priority</th>
+                                    <th class="py-3 px-4">Status</th>
+                                    <th class="py-3 px-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="taskListTable" class="divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                                <!-- Dynamic Render -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: EMPLOYEE / TEAM MANAGEMENT DIRECTORY -->
+            <section id="sec-team" class="space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div class="relative flex-1 sm:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="teamSearchInput" oninput="renderTeam()" placeholder="Search members..." class="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button onclick="openTeamModal()" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-user-plus"></i> Add Team Member
+                    </button>
+                </div>
+
+                <!-- Team Cards Grid -->
+                <div id="teamGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                    <!-- Dynamic Render -->
+                </div>
+            </section>
+
+            <!-- SECTION 4: FINANCIAL / EXPENSE TRACKER -->
+            <section id="sec-finance" class="space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                        <select id="financeTypeFilter" onchange="renderFinance()" class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="All">All Types</option>
+                            <option value="Income">Income Only</option>
+                            <option value="Expense">Expense Only</option>
+                        </select>
+                    </div>
+                    <button onclick="openFinanceModal()" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-plus"></i> Add Transaction
+                    </button>
+                </div>
+
+                <!-- Transactions Table -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th class="py-3 px-4">Date</th>
+                                    <th class="py-3 px-4">Description</th>
+                                    <th class="py-3 px-4">Category</th>
+                                    <th class="py-3 px-4">Type</th>
+                                    <th class="py-3 px-4">Amount</th>
+                                    <th class="py-3 px-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="financeTable" class="divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                                <!-- Dynamic Render -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- MODAL 1: ADD/EDIT TASK -->
+    <div id="taskModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 id="taskModalTitle" class="font-bold text-gray-900 dark:text-white">Add New Task</h3>
+                <button onclick="closeTaskModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form id="taskForm" onsubmit="saveTask(event)" class="p-6 space-y-4">
+                <input type="hidden" id="taskId">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Title</label>
+                    <input type="text" id="taskTitleInput" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Assignee</label>
+                        <select id="taskAssigneeInput" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <!-- Dynamic Options -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Deadline</label>
+                        <input type="date" id="taskDeadlineInput" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Priority</label>
+                        <select id="taskPriorityInput" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="Low">Low</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Status</label>
+                        <select id="taskStatusInput" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeTaskModal()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold">Save Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: ADD/EDIT TEAM MEMBER -->
+    <div id="teamModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 id="teamModalTitle" class="font-bold text-gray-900 dark:text-white">Add Team Member</h3>
+                <button onclick="closeTeamModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form id="teamForm" onsubmit="saveTeamMember(event)" class="p-6 space-y-4">
+                <input type="hidden" id="teamId">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Full Name</label>
+                    <input type="text" id="teamNameInput" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Role Title</label>
+                    <input type="text" id="teamRoleInput" placeholder="e.g. Frontend Developer" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Department</label>
+                        <select id="teamDeptInput" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="Engineering">Engineering</option>
+                            <option value="Design">Design</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Sales">Sales</option>
+                            <option value="HR">HR</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Email</label>
+                        <input type="email" id="teamEmailInput" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeTeamModal()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold">Save Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: ADD TRANSACTION -->
+    <div id="financeModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="font-bold text-gray-900 dark:text-white">Record Transaction</h3>
+                <button onclick="closeFinanceModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form id="financeForm" onsubmit="saveTransaction(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Description</label>
+                    <input type="text" id="finDescInput" placeholder="e.g. Software Subscription" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Type</label>
+                        <select id="finTypeInput" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="Income">Income</option>
+                            <option value="Expense">Expense</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Amount ($)</label>
+                        <input type="number" step="0.01" min="0.01" id="finAmountInput" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Category</label>
+                        <input type="text" id="finCategoryInput" placeholder="e.g. Operations" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Date</label>
+                        <input type="date" id="finDateInput" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeFinanceModal()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold">Save Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- INITIAL DEFAULT DATA STORAGE ---
+        const initialTeam = [
+            { id: 'tm1', name: 'Sarah Jenkins', role: 'Lead Product Designer', dept: 'Design', email: 's.jenkins@bizpulse.com' },
+            { id: 'tm2', name: 'Michael Chen', role: 'Senior Fullstack Dev', dept: 'Engineering', email: 'm.chen@bizpulse.com' },
+            { id: 'tm3', name: 'Elena Rostova', role: 'Marketing Manager', dept: 'Marketing', email: 'e.rostova@bizpulse.com' },
+            { id: 'tm4', name: 'David Kim', role: 'Sales Specialist', dept: 'Sales', email: 'd.kim@bizpulse.com' }
+        ];
+
+        const initialTasks = [
+            { id: 'tk1', title: 'Q3 Product Roadmap Review', assignee: 'Sarah Jenkins', deadline: '2026-11-15', priority: 'High', status: 'In Progress' },
+            { id: 'tk2', title: 'Database Migration to Cloud', assignee: 'Michael Chen', deadline: '2026-11-01', priority: 'High', status: 'Pending' },
+            { id: 'tk3', title: 'Social Media Campaign Q4', assignee: 'Elena Rostova', deadline: '2026-10-30', priority: 'Medium', status: 'Completed' }
+        ];
+
+        const initialFinance = [
+            { id: 'fn1', date: '2026-10-20', description: 'Enterprise Client Retainer', category: 'Sales', type: 'Income', amount: 12500.00 },
+            { id: 'fn2', date: '2026-10-22', description: 'Cloud Infrastructure Servers', category: 'Operations', type: 'Expense', amount: 1450.00 },
+            { id: 'fn3', date: '2026-10-25', description: 'Office Equipment Upgrade', category: 'Equipment', type: 'Expense', amount: 820.50 }
+        ];
+
+        // --- APP STATE ---
+        let teamData = JSON.parse(localStorage.getItem('biz_team')) || initialTeam;
+        let taskData = JSON.parse(localStorage.getItem('biz_tasks')) || initialTasks;
+        let financeData = JSON.parse(localStorage.getItem('biz_finance')) || initialFinance;
+        let revenueChartInstance = null;
+        let statusChartInstance = null;
+
+        // --- APP INITIALIZATION ---
+        window.onload = function() {
+            document.getElementById('currentDate').innerText = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            initTheme();
+            switchTab('dashboard');
+        };
+
+        function saveData() {
+            localStorage.setItem('biz_team', JSON.stringify(teamData));
+            localStorage.setItem('biz_tasks', JSON.stringify(taskData));
+            localStorage.setItem('biz_finance', JSON.stringify(financeData));
+        }
+
+        // --- UI & THEME TOGGLE ---
+        function initTheme() {
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                updateThemeUI(true);
+            } else {
+                document.documentElement.classList.remove('dark');
+                updateThemeUI(false);
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeUI(isDark);
+            renderCharts(); // Redraw chart colors
+        }
+
+        function updateThemeUI(isDark) {
+            document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            document.getElementById('themeLabel').innerText = isDark ? 'Light' : 'Dark';
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-lg shadow-lg text-white font-medium text-sm transition-all duration-300 transform translate-x-5 opacity-0 flex items-center gap-2 pointer-events-auto ${type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> ${message}`;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-x-5', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-5');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- NAVIGATION CONTROLLER ---
+        function switchTab(tabId) {
+            const tabs = ['dashboard', 'tasks', 'team', 'finance'];
+            const titles = {
+                'dashboard': 'Overview Analytics',
+                'tasks': 'Projects & Task Tracker',
+                'team': 'Team Directory',
+                'finance': 'Financial & Expense Tracker'
+            };
+
+            tabs.forEach(tab => {
+                const sec = document.getElementById(`sec-${tab}`);
+                const btn = document.getElementById(`nav-${tab}`);
+                if (tab === tabId) {
+                    sec.classList.remove('hidden');
+                    btn.classList.add('bg-blue-50', 'dark:bg-gray-700', 'text-blue-600', 'dark:text-blue-400');
+                } else {
+                    sec.classList.add('hidden');
+                    btn.classList.remove('bg-blue-50', 'dark:bg-gray-700', 'text-blue-600', 'dark:text-blue-400');
+                }
+            });
+
+            document.getElementById('pageTitle').innerText = titles[tabId];
+
+            if (tabId === 'dashboard') updateDashboard();
+            if (tabId === 'tasks') renderTasks();
+            if (tabId === 'team') renderTeam();
+            if (tabId === 'finance') renderFinance();
+        }
+
+        // --- DASHBOARD OVERVIEW RENDER ---
+        function updateDashboard() {
+            // KPI Computations
+            const totalIncome = financeData.filter(f => f.type === 'Income').reduce((a, b) => a + Number(b.amount), 0);
+            const totalExpenses = financeData.filter(f => f.type === 'Expense').reduce((a, b) => a + Number(b.amount), 0);
+            const pendingTasks = taskData.filter(t => t.status !== 'Completed').length;
+            const uniqueDepts = new Set(teamData.map(t => t.dept)).size;
+
+            document.getElementById('kpiRevenue').innerText = `$${totalIncome.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+            document.getElementById('kpiExpenses').innerText = `$${totalExpenses.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+            document.getElementById('kpiTasks').innerText = taskData.length;
+            document.getElementById('kpiPendingTasks').innerText = `${pendingTasks} tasks in progress`;
+            document.getElementById('kpiTeam').innerText = teamData.length;
+            document.getElementById('kpiDeptCount').innerText = `Across ${uniqueDepts} departments`;
+            
+            const netBalance = totalIncome - totalExpenses;
+            document.getElementById('kpiProfitMargin').innerText = `Net Balance: $${netBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+            document.getElementById('kpiProfitMargin').className = `text-xs font-medium mt-3 ${netBalance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`;
+
+            renderCharts();
+        }
+
+        function renderCharts() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#9ca3af' : '#4b5563';
+            const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+            // Chart 1: Revenue vs Expense
+            if (revenueChartInstance) revenueChartInstance.destroy();
+            const ctx1 = document.getElementById('revenueChart').getContext('2d');
+            revenueChartInstance = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: [8000, 9500, 11000, 10500, 13000, 14500, 14000, 15500, 16000, 18500],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Expenses',
+                            data: [4000, 4200, 5000, 4800, 5200, 6000, 5800, 6200, 6100, 6500],
+                            borderColor: '#f43f5e',
+                            backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: textColor } } },
+                    scales: {
+                        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                        y: { ticks: { color: textColor }, grid: { color: gridColor } }
+                    }
+                }
+            });
+
+            // Chart 2: Task Status Distribution
+            if (statusChartInstance) statusChartInstance.destroy();
+            const pending = taskData.filter(t => t.status === 'Pending').length;
+            const inProgress = taskData.filter(t => t.status === 'In Progress').length;
+            const completed = taskData.filter(t => t.status === 'Completed').length;
+
+            const ctx2 = document.getElementById('taskStatusChart').getContext('2d');
+            statusChartInstance = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'In Progress', 'Completed'],
+                    datasets: [{
+                        data: [pending, inProgress, completed],
+                        backgroundColor: ['#f59e0b', '#3b82f6', '#10b981']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: textColor } } }
+                }
+            });
+        }
+
+        // --- TASK TRACKER CONTROLLER ---
+        function renderTasks() {
+            const table = document.getElementById('taskListTable');
+            const search = document.getElementById('taskSearchInput').value.toLowerCase();
+            const filter = document.getElementById('taskStatusFilter').value;
+
+            const filtered = taskData.filter(task => {
+                const matchesSearch = task.title.toLowerCase().includes(search) || task.assignee.toLowerCase().includes(search);
+                const matchesFilter = filter === 'All' || task.status === filter;
+                return matchesSearch && matchesFilter;
+            });
+
+            table.innerHTML = filtered.length ? filtered.map(t => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition">
+                    <td class="py-3 px-4 font-medium text-gray-900 dark:text-white">${t.title}</td>
+                    <td class="py-3 px-4">${t.assignee}</td>
+                    <td class="py-3 px-4">${t.deadline}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${t.priority === 'High' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' : t.priority === 'Medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}">${t.priority}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${t.status === 'Completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : t.status === 'In Progress' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}">${t.status}</span>
+                    </td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                        <button onclick="editTask('${t.id}')" class="text-blue-600 hover:text-blue-800 dark:text-blue-400"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteTask('${t.id}')" class="text-rose-600 hover:text-rose-800 dark:text-rose-400"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('') : `<tr><td colspan="6" class="text-center py-6 text-gray-500">No tasks found.</td></tr>`;
+        }
+
+        function populateAssigneeDropdown() {
+            const select = document.getElementById('taskAssigneeInput');
+            select.innerHTML = teamData.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+        }
+
+        function openTaskModal(editId = null) {
+            populateAssigneeDropdown();
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskId').value = '';
+            document.getElementById('taskModalTitle').innerText = 'Add New Task';
+
+            if (editId) {
+                const task = taskData.find(t => t.id === editId);
+                if (task) {
+                    document.getElementById('taskId').value = task.id;
+                    document.getElementById('taskTitleInput').value = task.title;
+                    document.getElementById('taskAssigneeInput').value = task.assignee;
+                    document.getElementById('taskDeadlineInput').value = task.deadline;
+                    document.getElementById('taskPriorityInput').value = task.priority;
+                    document.getElementById('taskStatusInput').value = task.status;
+                    document.getElementById('taskModalTitle').innerText = 'Edit Task';
+                }
+            }
+            document.getElementById('taskModal').classList.remove('hidden');
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.add('hidden');
+        }
+
+        function saveTask(e) {
+            e.preventDefault();
+            const id = document.getElementById('taskId').value;
+            const newTask = {
+                id: id || 'tk' + Date.now(),
+                title: document.getElementById('taskTitleInput').value,
+                assignee: document.getElementById('taskAssigneeInput').value,
+                deadline: document.getElementById('taskDeadlineInput').value,
+                priority: document.getElementById('taskPriorityInput').value,
+                status: document.getElementById('taskStatusInput').value
+            };
+
+            if (id) {
+                const index = taskData.findIndex(t => t.id === id);
+                taskData[index] = newTask;
+                showToast('Task updated successfully');
+            } else {
+                taskData.push(newTask);
+                showToast('New task added successfully');
+            }
+
+            saveData();
+            closeTaskModal();
+            renderTasks();
+        }
+
+        function editTask(id) { openTaskModal(id); }
+
+        function deleteTask(id) {
+            taskData = taskData.filter(t => t.id !== id);
+            saveData();
+            renderTasks();
+            showToast('Task deleted', 'error');
+        }
+
+        // --- TEAM DIRECTORY CONTROLLER ---
+        function renderTeam() {
+            const grid = document.getElementById('teamGrid');
+            const search = document.getElementById('teamSearchInput').value.toLowerCase();
+
+            const filtered = teamData.filter(m => m.name.toLowerCase().includes(search) || m.role.toLowerCase().includes(search) || m.dept.toLowerCase().includes(search));
+
+            grid.innerHTML = filtered.length ? filtered.map(m => `
+                <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center text-base">
+                                ${m.name.split(' ').map(n=>n[0]).join('')}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-900 dark:text-white">${m.name}</h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">${m.role}</p>
+                            </div>
+                        </div>
+                        <div class="space-y-1 text-xs text-gray-600 dark:text-gray-300">
+                            <p><i class="fa-solid fa-building w-4"></i> ${m.dept}</p>
+                            <p><i class="fa-solid fa-envelope w-4"></i> ${m.email}</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <button onclick="editTeamMember('${m.id}')" class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-blue-600 dark:text-blue-400 rounded hover:bg-gray-200"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button onclick="deleteTeamMember('${m.id}')" class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-rose-600 dark:text-rose-400 rounded hover:bg-gray-200"><i class="fa-solid fa-trash"></i> Delete</button>
+                    </div>
+                </div>
+            `).join('') : `<div class="col-span-full text-center py-6 text-gray-500">No team members found.</div>`;
+        }
+
+        function openTeamModal(editId = null) {
+            document.getElementById('teamForm').reset();
+            document.getElementById('teamId').value = '';
+            document.getElementById('teamModalTitle').innerText = 'Add Team Member';
+
+            if (editId) {
+                const member = teamData.find(m => m.id === editId);
+                if (member) {
+                    document.getElementById('teamId').value = member.id;
+                    document.getElementById('teamNameInput').value = member.name;
+                    document.getElementById('teamRoleInput').value = member.role;
+                    document.getElementById('teamDeptInput').value = member.dept;
+                    document.getElementById('teamEmailInput').value = member.email;
+                    document.getElementById('teamModalTitle').innerText = 'Edit Member';
+                }
+            }
+            document.getElementById('teamModal').classList.remove('hidden');
+        }
+
+        function closeTeamModal() { document.getElementById('teamModal').classList.add('hidden'); }
+
+        function saveTeamMember(e) {
+            e.preventDefault();
+            const id = document.getElementById('teamId').value;
+            const newMember = {
+                id: id || 'tm' + Date.now(),
+                name: document.getElementById('teamNameInput').value,
+                role: document.getElementById('teamRoleInput').value,
+                dept: document.getElementById('teamDeptInput').value,
+                email: document.getElementById('teamEmailInput').value
+            };
+
+            if (id) {
+                const index = teamData.findIndex(m => m.id === id);
+                teamData[index] = newMember;
+                showToast('Team member updated');
+            } else {
+                teamData.push(newMember);
+                showToast('Team member added');
+            }
+
+            saveData();
+            closeTeamModal();
+            renderTeam();
+        }
+
+        function editTeamMember(id) { openTeamModal(id); }
+
+        function deleteTeamMember(id) {
+            teamData = teamData.filter(m => m.id !== id);
+            saveData();
+            renderTeam();
+            showToast('Member removed', 'error');
+        }
+
+        // --- FINANCIAL TRACKER CONTROLLER ---
+        function renderFinance() {
+            const table = document.getElementById('financeTable');
+            const filter = document.getElementById('financeTypeFilter').value;
+
+            const filtered = financeData.filter(f => filter === 'All' || f.type === filter);
+
+            table.innerHTML = filtered.length ? filtered.map(f => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition">
+                    <td class="py-3 px-4">${f.date}</td>
+                    <td class="py-3 px-4 font-medium text-gray-900 dark:text-white">${f.description}</td>
+                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-xs">${f.category}</span></td>
+                    <td class="py-3 px-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${f.type === 'Income' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'}">${f.type}</span>
+                    </td>
+                    <td class="py-3 px-4 font-semibold ${f.type === 'Income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">
+                        ${f.type === 'Income' ? '+' : '-'}$${Number(f.amount).toFixed(2)}
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="deleteTransaction('${f.id}')" class="text-rose-600 hover:text-rose-800 dark:text-rose-400"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('') : `<tr><td colspan="6" class="text-center py-6 text-gray-500">No transactions recorded.</td></tr>`;
+        }
+
+        function openFinanceModal() {
+            document.getElementById('financeForm').reset();
+            document.getElementById('finDateInput').value = new Date().toISOString().split('T')[0];
+            document.getElementById('financeModal').classList.remove('hidden');
+        }
+
+        function closeFinanceModal() { document.getElementById('financeModal').classList.add('hidden'); }
+
+        function saveTransaction(e) {
+            e.preventDefault();
+            const newTransaction = {
+                id: 'fn' + Date.now(),
+                description: document.getElementById('finDescInput').value,
+                type: document.getElementById('finTypeInput').value,
+                amount: parseFloat(document.getElementById('finAmountInput').value),
+                category: document.getElementById('finCategoryInput').value,
+                date: document.getElementById('finDateInput').value
+            };
+
+            financeData.unshift(newTransaction);
+            saveData();
+            closeFinanceModal();
+            renderFinance();
+            showToast('Transaction recorded successfully');
+        }
+
+        function deleteTransaction(id) {
+            financeData = financeData.filter(f => f.id !== id);
+            saveData();
+            renderFinance();
+            showToast('Transaction removed', 'error');
+        }
+    </script>
+</body>
+</html>
